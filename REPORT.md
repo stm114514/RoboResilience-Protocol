@@ -66,13 +66,13 @@
 
 ## 图表证据
 
-![综合奖励对比](assets/reward_convergence.png)  
+![综合奖励对比](reward_convergence.png)  
 *A组收敛最慢，C组Mean Reward与B组相近（甚至收敛更快），但这是因为C组陷入了**动态扭曲/痉挛**（高能耗失控），而非"稳定地坐下"。高度指标（图2）将揭露这一欺骗性。*
 
-![StandUp奖励表现](assets/stand_up_reward.png)  
+![StandUp奖励表现](stand_up_reward.png)  
 *StandUp Reward（纯高度指标）：B组（黄）显著高于C组（蓝），A组（绿）最低。证明C组的"-88"是扭曲挣扎，B组的"-89"是稳定支撑。*
 
-原始数据：[data/abc_comparison.xlsx](data/abc_comparison.xlsx)
+原始数据：[data/abc_comparison.xlsx](abc_comparison.xlsx)
 
 ---
 
@@ -94,3 +94,4 @@
 ---
 
 *Architects don't wait for perfect blueprints. They break ground.*
+
