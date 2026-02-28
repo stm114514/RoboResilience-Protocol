@@ -12,10 +12,10 @@
 ```text
 Phase0_ABC/
 ├── README.md
-├── REPORT.md    #详细报告
-├── abc_comparison(1).xlsx
-├── reward_convergence.jpg                     
-└── stand_up_reward.jpg 
+├── REPORT.md                 #详细报告
+├── abc_comparison(1).xlsx    #数据表格
+├── reward_convergence.jpg    #奖励函数曲线                 
+└── stand_up_reward.jpg       #高度变化曲线
 ```
 **核心发现**：机器人必须从多支撑点姿态（跪姿，Level 2）开始学习站立，从平躺（Level 3）开始是绝境，从站立（Level 1）开始则是痉挛陷阱。
 
@@ -43,10 +43,10 @@ Phase1_Stand/
 │   ├── [crawl_to_superhero.pt](./checkpoints/crawl_to_superhero.pt)      # Level 3→2.5：四点支撑到超级英雄姿势
 │   ├── [superhero_to_double.pt](./checkpoints/superhero_to_double.pt)    # Level 2.5→2：撤手进入双膝跪地
 │   ├── [double_to_single.pt](./checkpoints/double_to_single.pt)          # Level 2→1.5：压缩弹簧到单膝
-│   └── [single_to_stand.pt](./checkpoints/single_to_stand.pt)            # Level 1.5→1：爆发站立（轻微内八）
+│   └── [single_to_stand.pt](./checkpoints/single_to_stand.pt)            # Level 1.5→1：爆发站立
 │
 ├── [play_hierarchical.py](./play_hierarchical.py)                        # 分层播放脚本（硬切换+红绿灯）
-├── [taxonomy_v0.1.json](./taxonomy_v0.1.json)                            # 故障分类标准草案（JSON）
+├── [taxonomy_v0.1.json](./taxonomy_v0.1.json)                            # 故障分类标准草案
 └── README.md
 ```
 
