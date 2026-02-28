@@ -27,7 +27,7 @@
 - 可视化验证：头顶红绿灯实时显示当前故障等级（红→橙→黄→青→绿）
 
 **文件结构**：
-
+```text
 RoboResilience-Protocol/
 ├── checkpoints/                    # 策略检查点（核心资产）
 │   ├── [crawl_to_superhero.pt](./checkpoints/crawl_to_superhero.pt)      # Level 3→2.5：四点支撑到超级英雄姿势
