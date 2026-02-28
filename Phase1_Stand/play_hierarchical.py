@@ -12,10 +12,10 @@ import cli_args  # isort: skip
 
 # ========== 4个策略路径 ==========
 CHECKPOINT_PATHS = {
-    "crawl": r"E:\IsaacLab\checkpoints\superhero_900.pt",
-    "superhero": r"E:\IsaacLab\checkpoints\double_kneel_300.pt",
-    "double": r"E:\IsaacLab\checkpoints\single_kneel_700.pt",
-    "single": r"E:\IsaacLab\checkpoints\stand_500.pt"
+    "crawl": r"E:\IsaacLab\checkpoints\crawl_to_superhero.pt",
+    "superhero": r"E:\IsaacLab\checkpoints\superhero_to_double.pt",
+    "double": r"E:\IsaacLab\checkpoints\double_to_single.pt",
+    "single": r"E:\IsaacLab\checkpoints\single_to_stand.pt"
 }
 
 parser = argparse.ArgumentParser(description="RoboResilience Hierarchical Play")
@@ -117,7 +117,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlBaseRun
     current_policy = policies[current_phase]
     current_policy_nn = policy_nns[current_phase]
     
-    # 测试参数
+    # # ========== 新增：阶段冷却时间（防止过快切换）==========
     # MIN_STEPS_PER_PHASE = {
     #     "crawl": 5,        # crawl至少运行50步才能切换（避免初始就切）
     #     "superhero": 10,   # superhero至少100步
