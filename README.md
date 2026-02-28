@@ -5,6 +5,11 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+[![Status](https://img.shields.io/badge/Status-WIP%20(Research%20Prototype)-orange)]() 
+[![Phase](https://img.shields.io/badge/Phase-1%20Completed-blue)]()
+
+⚠️ **研究原型声明**：本项目为概念验证阶段（Proof of Concept），代码仅供研究参考，**完整复现文档将在Phase 2整理**。当前展示以视频和现场演示为主。
+
 ## 项目演进
 
 ### Phase 0: 初始化策略研究（已完成）
