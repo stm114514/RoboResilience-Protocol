@@ -3,21 +3,21 @@
 
 # Changes: Added hierarchical policy switching, phase visualization, action blending logic
 """RoboResilience Protocol - 4阶段分层恢复"""
-import sys
-sys.path.insert(0, r"E:\IsaacLab\scripts\reinforcement_learning\rsl_rl")
 import argparse
 import sys
 from isaaclab.app import AppLauncher
-
 import cli_args  # isort: skip
-
-# ========== 4个策略路径 ==========
+# ========== 配置说明 ==========
+# 使用前请修改以下路径为本机实际路径
+# 策略文件路径（4个阶段检查点）
 CHECKPOINT_PATHS = {
-    "crawl": r"E:\IsaacLab\checkpoints\crawl_to_superhero.pt",
-    "superhero": r"E:\IsaacLab\checkpoints\superhero_to_double.pt",
-    "double": r"E:\IsaacLab\checkpoints\double_to_single.pt",
-    "single": r"E:\IsaacLab\checkpoints\single_to_stand.pt"
+    "crawl": r"./checkpoints/crawl_to_superhero.pt",      # 请修改：Level 3→2.5
+    "superhero": r"./checkpoints/superhero_to_double.pt", # 请修改：Level 2.5→2  
+    "double": r"./checkpoints/double_to_single.pt",       # 请修改：Level 2→1.5
+    "single": r"./checkpoints/single_to_stand.pt"         # 请修改：Level 1.5→1
 }
+# Python路径配置（根据你的IsaacLab安装位置修改）
+sys.path.insert(0, r"修改为IsaacLab脚本路径")
 
 parser = argparse.ArgumentParser(description="RoboResilience Hierarchical Play")
 parser.add_argument("--video", action="store_true", default=False)
@@ -296,6 +296,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlBaseRun
 if __name__ == "__main__":
     main()
     simulation_app.close()
+
 
 
 
