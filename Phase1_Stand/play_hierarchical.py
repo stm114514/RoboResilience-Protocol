@@ -118,18 +118,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlBaseRun
     current_policy = policies[current_phase]
     current_policy_nn = policy_nns[current_phase]
     
-    # # ========== 新增：阶段冷却时间（防止过快切换）==========
-    # MIN_STEPS_PER_PHASE = {
-    #     "crawl": 5,        # crawl至少运行50步才能切换（避免初始就切）
-    #     "superhero": 10,   # superhero至少100步
-    #     "double": 20,      # double至少100步
-    #     "single": 0         # 最后一个阶段不限制
-    # }
-    # phase_step_count = 0  # 当前阶段已运行步数
     MIN_STEPS_PER_PHASE = {
-        "crawl": 18,        # crawl至少运行50步才能切换（避免初始就切）
-        "superhero": 20,   # superhero至少100步
-        "double": 25,      # double至少100步
+        "crawl": 18,        # crawl
+        "superhero": 20,   # superhero
+        "double": 25,      # double
         "single": 0         # 最后一个阶段不限制
     }
     phase_step_count = 0  # 当前阶段已运行步数
@@ -168,7 +160,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlBaseRun
     
     print("[INFO] 头顶指示灯已创建（红色=初始）")
     
-    # ========== 新增：初始姿态延迟1秒 ==========
+    # ========== 初始姿态延迟1秒 ==========
     # print("\n" + "="*60)
     # print("初始姿态展示：物理稳定1秒...")
     # print("="*60)
@@ -304,5 +296,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg, agent_cfg: RslRlBaseRun
 if __name__ == "__main__":
     main()
     simulation_app.close()
+
 
 
