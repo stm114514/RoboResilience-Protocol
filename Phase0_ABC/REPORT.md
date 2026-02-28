@@ -72,7 +72,7 @@
 ![StandUp奖励表现](stand_up_reward.jpg)  
 *StandUp Reward（纯高度指标）：B组（黄）显著高于C组（蓝），A组（绿）最低。证明C组的"-88"是扭曲挣扎，B组的"-89"是稳定支撑。*
 
-原始数据：[data/abc_comparison.xlsx](abc_comparison.xlsx)
+原始数据：[data/abc_comparison.xlsx](abc_comparison(1).xlsx)
 
 ---
 
