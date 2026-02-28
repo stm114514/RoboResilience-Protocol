@@ -46,7 +46,6 @@ Phase1_Stand/
 │   └── [single_to_stand.pt](./checkpoints/single_to_stand.pt)            # Level 1.5→1：爆发站立（轻微内八）
 │
 ├── [play_hierarchical.py](./play_hierarchical.py)                        # 分层播放脚本（硬切换+红绿灯）
-├── [stand_up_env_cfg.py](./stand_up_env_cfg.py)                          # 环境配置文件（IsaacLab）
 ├── [taxonomy_v0.1.json](./taxonomy_v0.1.json)                            # 故障分类标准草案（JSON）
 └── README.md
 ```
