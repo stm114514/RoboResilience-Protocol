@@ -28,8 +28,6 @@
 
 **文件结构**：
 
-
-```text
 RoboResilience-Protocol/
 ├── checkpoints/                    # 策略检查点（核心资产）
 │   ├── [crawl_to_superhero.pt](./checkpoints/crawl_to_superhero.pt)      # Level 3→2.5：四点支撑到超级英雄姿势
@@ -41,3 +39,18 @@ RoboResilience-Protocol/
 ├── [stand_up_env_cfg.py](./stand_up_env_cfg.py)                          # 环境配置文件（IsaacLab）
 ├── [taxonomy_v0.1.json](./taxonomy_v0.1.json)                            # 故障分类标准草案（JSON）
 └── README.md
+
+
+## 为什么不是端到端？
+
+| 端到端（黑盒） | RoboResilience（白盒） |
+|---|---|
+| 流畅但不可解释 | 僵硬但可审计 |
+| 摔了不知道在哪一层失败 | 明确知道处于Level 2还是Level 3 |
+| 需要海量数据 | 模块化，可独立调试 |
+
+## 快速开始
+
+```bash
+# 运行分层恢复演示
+python Phase1/play_hierarchical.py --task Isaac-H1-StandUp-v0 --num_envs 1
