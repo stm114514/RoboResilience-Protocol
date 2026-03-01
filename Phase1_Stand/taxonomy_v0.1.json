@@ -1,39 +1,183 @@
 {
   "protocol_metadata": {
-    "version": "0.3",
+    "version": "0.4",
     "author": "Astra198",
-    "date": "2026-02-28",
+    "date": "2026-03-01",
     "robot_platform": "Unitree H1",
     "simulator": "IsaacLab",
-    "note": "三层分类架构：几何态(Physical Reality) + 功能态(Strategic Goal) + 映射规则(Transition Logic)"
+    "classification_philosophy": {
+      "what_this_classifies": "机器人摔倒恢复过程中的支撑几何状态（Support Geometry States），而非关节姿势",
+      "core_insight": "千万种关节角度坍缩为3种支撑维度：2D面支撑（安全）、1D线支撑（危险）、0D点支撑（临界）。分类学捕捉的是物理稳定性本质，而非具体肢体排列",
+      "layer_1_geometry": "支撑基底拓扑（Support Polygon）：地面接触点形成的多边形维度决定静态稳定性",
+      "layer_2_function": "恢复紧迫性等级：从'躺平重建'（Level 3）到'快速发射'（Level 2）到'临门一脚'（Level 1）",
+      "layer_3_implementation": "传感器信号→几何状态的映射工程（当前用高度近似，未来用接触力+质心投影）"
+    }
   },
 
   "layer_1_geometric": {
-    "description": "物理几何层：基于接触拓扑和支撑维度的客观状态分类",
+    "description": "物理几何层：基于支撑基底（Support Polygon）的维度分类，不指定具体关节，只关心地面接触几何",
     "states": {
       "S4_Base": {
-        "name": "Crawl",
-        "contact_topology": {
-          "theoretical": ["left_hand", "right_hand", "left_knee", "right_knee"],
-          "actual_observed": ["left_hand", "right_hand", "left_knee", "right_knee"],
-          "sensor_indices": [7, 8, 11, 12],
-          "note": "TODO: 根据play日志确认实际接触传感器ID"
+        "name": "Multi_Contact_Prone",
+        "support_geometry": {
+          "dimension": 2,
+          "type": "polygon_support",
+          "contact_constraint": "≥3个非共线接触点",
+          "possible_contacts": ["hands", "knees", "feet", "torso"],
+          "physical_criterion": "质心投影必须落在接触点形成的凸包（Convex Hull）内",
+          "note": "混沌态：手/膝/脚的任意≥3点组合，甚至腹部贴地。只要形成2D支撑面即为此态"
         },
-        "support_dimension": 2,
-        "support_type": "convex_hull_4point",
         "stability_class": "static_stable",
-        "physical_meaning": "四点共面，质心投影必在凸包内，躺赢状态",
-        "typical_height_range": [0.15, 0.35],
+        "physical_meaning": "躺赢态：支撑维度=2D（面），质心必在支撑多边形内，无需动态平衡即可静止",
+        "typical_height_range": [0.10, 0.40],
+        "examples": [
+          "双手+双膝（经典爬行）",
+          "双手+双膝+双脚（腹部着地，6点接触）",
+          "双膝+双脚（手悬空，像海豹）",
+          "单手+双膝+单脚（不对称趴卧）"
+        ],
         "policy_file": "model_crawl.pt"
       },
 
       "S3_Tripod": {
         "name": "Superhero_Landing",
-        "contact_topology": {
-          "theoretical": ["right_hand", "left_knee", "right_ankle"],
-          "actual_observed": ["right_hand", "left_knee", "right_foot"],
-          "sensor_indices": [8, 11, 16],
-          "note": "基于训练观察：右手撑地+左膝跪地+右脚向后伸直形成船锚"
+        "support_geometry": {
+          "dimension": 2,
+          "type": "asymmetric_triangle",
+          "contact_constraint": "3个非共线接触点，形成非对称三角形",
+          "typical_arrangement": "一手 + 一膝 + 对侧脚（如：右手+左膝+右脚）",
+          "physical_criterion": "质心在三角形内，但支撑非对称（一脚后伸提供反力矩）"
+        },
+        "stability_class": "directionally_stable",
+        "physical_meaning": "安全锚点：2D支撑但故意非对称（船锚效应），防止前倾翻滚，是唯一可长期停留的过渡态",
+        "typical_height_range": [0.35, 0.55],
+        "policy_file": "model_superhero.pt",
+        "critical_insight": "从S4的混沌多点到S3的精准三点，是从'无序躺平'到'有序恢复'的关键守门员"
+      },
+
+      "S2_Bilateral": {
+        "name": "Double_Kneel",
+        "support_geometry": {
+          "dimension": 1,
+          "type": "line_segment_longitudinal",
+          "contact_constraint": "2个接触点，前后排列（通常是双膝）",
+          "physical_criterion": "两接触点连线呈前后方向，质心投影在线段上或附近"
+        },
+        "stability_class": "longitudinally_unstable",
+        "physical_meaning": "危险走廊：支撑维度降至1D（线段），前后方向无支撑，极易前后摔倒，必须快速通过",
+        "typical_height_range": [0.50, 0.60],
+        "policy_file": "model_double.pt",
+        "danger_alert": "最危险状态：1D前后排列≠1D对角排列（S1）。前后排列无法侧向发力，是死亡地带"
+      },
+
+      "S1_Unipodal": {
+        "name": "Asymmetric_Kneel",
+        "support_geometry": {
+          "dimension": 1,
+          "type": "line_segment_diagonal",
+          "contact_constraint": "2个接触点，对角线排列（一脚站立+对侧膝跪地）",
+          "typical_arrangement": "左脚站立（全脚掌）+ 右膝跪地（+右脚可能蹭地）",
+          "physical_criterion": "支撑线段呈对角线，允许侧向蹬地发力"
+        },
+        "stability_class": "directionally_stable",
+        "physical_meaning": "爆发预备：1D对角支撑像压缩弹簧，可侧向发力站起。区别于S2的前后排列，对角排列是活的",
+        "typical_height_range": [0.65, 0.80],
+        "policy_file": "model_single.pt",
+        "tactical_role": "短跑起跑器：从1D对角支撑通过发力跃迁至2D双脚支撑（S0）"
+      },
+
+      "S0_Bipedal": {
+        "name": "Stand",
+        "support_geometry": {
+          "dimension": 2,
+          "type": "convex_hull_feet",
+          "contact_constraint": "双脚（或双脚+辅助点），形成稳定的2D支撑面",
+          "physical_criterion": "质心在双脚凸包内，支撑维度回到2D但依赖动态平衡"
+        },
+        "stability_class": "dynamically_stable",
+        "physical_meaning": "目标态：2D支撑恢复，但由静态稳定（S4）转为动态稳定（需主动平衡）",
+        "typical_height_range": [0.85, 1.05],
+        "policy_file": "model_stand.pt",
+        "sub_states": {
+          "S0_stable": "双脚平行，质心居中，长期稳定",
+          "S0_trap": "双脚内八/晃动，局部最优，需微调或退回S1"
+        }
+      }
+    }
+  },
+
+  "layer_2_functional": {
+    "description": "功能策略层：基于恢复难度和时间压力的分类，回答'现在有多危险'和'该怎么救'",
+    "levels": {
+      "Level_3_Prone_Trap": {
+        "name": "平躺陷阱",
+        "definition": "支撑维度=2D但处于躺平姿态（S4），质心虽稳但功能上无法行动",
+        "geometric_equivalents": ["S4_Base"],
+        "recovery_challenge": "必须重建支撑序列：从混沌多点→精准三点→线支撑→站立",
+        "time_budget": "8-10秒（完整重建链条）",
+        "strategy": "Sequential_Rebuild",
+        "priority": "生存优先：不追求姿态优美，先建立S3安全锚点"
+      },
+
+      "Level_2_Functional_Recovery": {
+        "name": "功能性恢复",
+        "definition": "已从躺平进入恢复流程，但处于1D支撑（S2）或特定2D过渡（S3）",
+        "geometric_equivalents": ["S3_Tripod", "S2_Bilateral", "S1_Unipodal"],
+        "recovery_challenge": "快速通过危险走廊（S2），利用S3作为安全港，从S1爆发站起",
+        "time_budget": "3-5秒（快速发射）",
+        "strategy": "Asymmetric_Launch",
+        "critical_path": "S3（安全锚）→快速通过S2（<0.5s）→S1爆发→S0"
+      },
+
+      "Level_1_Standing_Trap": {
+        "name": "站立陷阱",
+        "definition": "几何上接近站立（S0）但可能处于亚稳态（内八/晃动），或处于爆发临界点（S1）",
+        "geometric_equivalents": ["S1_Unipodal", "S0_Bipedal"],
+        "recovery_challenge": "临门一脚：要么从S1蹬地站起，要么从S0_trap微调姿态",
+        "time_budget": "1-2秒（快速决策）",
+        "strategy": "Stabilization_or_Explosion",
+        "risk": "误判为成功，实则处于S0_trap（内八），随时可能二次摔倒"
+      }
+    }
+  },
+
+  "layer_3_mapping": {
+    "description": "工程实现层：传感器信号→几何状态的映射规则（当前为硬切换，未来为MoE门控）",
+    "implementation_note": "当前使用高度+接触传感器近似，理想情况应计算质心投影与支撑凸包的几何关系",
+    "transition_rules": {
+      "S4_to_S3": {
+        "trigger": "从≥4点接触减少为3点特定组合（手+膝+脚），且躯干pitch角减小",
+        "geometric_meaning": "从混沌多点到精准三角形支撑",
+        "fallback": "若无法形成S3，退回S4重新调整"
+      },
+      "S3_to_S2": {
+        "trigger": "手部离地，仅剩双膝（或膝+脚但前后排列）",
+        "geometric_meaning": "从2D三角形降为1D前后线段（危险）",
+        "timeout": "0.5s内必须离开S2，否则退回S3"
+      },
+      "S2_to_S1": {
+        "trigger": "一膝离地，变为脚+对侧膝的对角线支撑",
+        "geometric_meaning": "从1D前后排列转为1D对角排列（获得侧向发力能力）"
+      },
+      "S1_to_S0": {
+        "trigger": "支撑点变为双脚（2D凸包），高度达标",
+        "geometric_meaning": "从1D对角支撑跃迁至2D双脚支撑"
+      }
+    }
+  },
+
+  "implementation_notes": {
+    "sensor_integration": {
+      "contact_sensors": ["left_foot", "right_foot", "left_knee", "right_knee", "left_hand", "right_hand"],
+      "indices": [15, 16, 11, 12, 7, 8],
+      "todo": "记录play日志，验证各状态下实际激活的传感器组合，支撑几何理论优先于具体传感器ID"
+    },
+    "visualization": {
+      "color_coding": "Red(S4混沌)→Orange(S3三角)→Yellow(S2危险线段)→Cyan(S1对角)→Green(S0目标)",
+      "indicator": "头顶球体显示当前支撑维度（2D/1D）和几何状态"
+    }
+  }
+}
         },
         "support_dimension": 2,
         "support_type": "asymmetric_triangle",
