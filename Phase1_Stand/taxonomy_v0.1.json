@@ -1,26 +1,223 @@
 {
-  "protocol_version": "0.1",
-  "author": "astra198",
-  "created_date": "2026-02-27",
-  "taxonomy": {
-    "Level_3": {
-      "name": "Crawl",
-      "description": "四点支撑/爬行姿态，最低生存模式",
-      "height_range": [0.0, 0.45],
-      "strategy_file": "checkpoints/crawl_to_superhero.pt"
+  "protocol_metadata": {
+    "version": "0.3",
+    "author": "Kronos",
+    "date": "2026-02-28",
+    "robot_platform": "Unitree H1",
+    "simulator": "IsaacLab",
+    "note": "三层分类架构：几何态(Physical Reality) + 功能态(Strategic Goal) + 映射规则(Transition Logic)"
+  },
+
+  "layer_1_geometric": {
+    "description": "物理几何层：基于接触拓扑和支撑维度的客观状态分类",
+    "states": {
+      "S4_Base": {
+        "name": "Crawl",
+        "contact_topology": {
+          "theoretical": ["left_hand", "right_hand", "left_knee", "right_knee"],
+          "actual_observed": ["left_hand", "right_hand", "left_knee", "right_knee"],
+          "sensor_indices": [7, 8, 11, 12],
+          "note": "TODO: 根据play日志确认实际接触传感器ID"
+        },
+        "support_dimension": 2,
+        "support_type": "convex_hull_4point",
+        "stability_class": "static_stable",
+        "physical_meaning": "四点共面，质心投影必在凸包内，躺赢状态",
+        "typical_height_range": [0.15, 0.35],
+        "policy_file": "model_crawl.pt"
+      },
+
+      "S3_Tripod": {
+        "name": "Superhero_Landing",
+        "contact_topology": {
+          "theoretical": ["right_hand", "left_knee", "right_ankle"],
+          "actual_observed": ["right_hand", "left_knee", "right_foot"],
+          "sensor_indices": [8, 11, 16],
+          "note": "基于训练观察：右手撑地+左膝跪地+右脚向后伸直形成船锚"
+        },
+        "support_dimension": 2,
+        "support_type": "asymmetric_triangle",
+        "stability_class": "directionally_stable",
+        "physical_meaning": "三点定平面，非对称支撑防止前倾翻滚，是关键过渡锚点",
+        "typical_height_range": [0.40, 0.55],
+        "policy_file": "model_superhero.pt",
+        "critical_insight": "右腿后伸提供反力矩，防止躯干前扑，这是从Level 3到Level 2的守门员"
+      },
+
+      "S2_Bilateral": {
+        "name": "Double_Kneel",
+        "contact_topology": {
+          "theoretical": ["left_knee", "right_knee"],
+          "optional_hands": ["left_hand", "right_hand"],
+          "actual_observed": ["left_knee", "right_knee"],
+          "sensor_indices": [11, 12],
+          "note": "双膝着地，可能伴随手部轻触，但主要支撑在膝盖"
+        },
+        "support_dimension": 1,
+        "support_type": "line_segment",
+        "stability_class": "longitudinally_unstable",
+        "physical_meaning": "线段支撑（1D），前后方向极不稳定，必须快速过渡到单膝（0D爆发）或退回三脚架（2D稳定）",
+        "typical_height_range": [0.50, 0.60],
+        "policy_file": "model_double.pt",
+        "danger_alert": "此状态最危险：支撑维度降至1D，停留超过0.5秒极易前后摔倒"
+      },
+
+      "S1_Unipodal": {
+        "name": "Single_Kneel",
+        "contact_topology": {
+          "theoretical": ["left_knee"],
+          "actual_observed": ["left_knee"],
+          "sensor_indices": [11],
+          "note": "单膝跪地，另一腿预备蹬地，手可能悬空或轻扶"
+        },
+        "support_dimension": 0,
+        "support_type": "point_contact",
+        "stability_class": "marginally_stable",
+        "physical_meaning": "单点接触（0D），势能最高，处于爆发临界点，可随时发力站起",
+        "typical_height_range": [0.65, 0.80],
+        "policy_file": "model_single.pt",
+        "tactical_role": "短跑起跑式：压缩弹簧，准备爆发"
+      },
+
+      "S0_Bipedal": {
+        "name": "Stand",
+        "contact_topology": {
+          "theoretical": ["left_foot", "right_foot"],
+          "actual_observed": ["left_foot", "right_foot"],
+          "sensor_indices": [15, 16],
+          "note": "双足着地，可能伴随内八（Standing Trap）或稳定站立"
+        },
+        "support_dimension": 2,
+        "support_type": "convex_hull_feet",
+        "stability_class": "dynamically_stable",
+        "physical_meaning": "目标状态，但可能处于Standing Trap（内八/晃动）",
+        "typical_height_range": [0.85, 1.05],
+        "policy_file": "model_stand.pt",
+        "sub_states": {
+          "S0_stable": "双脚平行，质心居中",
+          "S0_trap": "双脚内八，关节力矩超限，需调整"
+        }
+      }
+    }
+  },
+
+  "layer_2_functional": {
+    "description": "功能策略层：基于任务目标的故障分类，决定'该不该救'和'怎么救'",
+    "levels": {
+      "Level_3_Prone_Trap": {
+        "name": "平躺陷阱",
+        "definition": "质心投影完全偏离支撑基底，无可用的功能性支撑点，必须重建支撑",
+        "geometric_equivalents": ["S4_Base"],
+        "recovery_class": "Sequential_Multi_Stage",
+        "required_chain": ["S4→S3→S2→S1→S0"],
+        "time_budget": "8-10秒（完整重建）",
+        "priority": "生存优先（Survival over Perfection）"
+      },
+
+      "Level_2_Functional_Recovery": {
+        "name": "功能性恢复",
+        "definition": "存在非对称支撑点，可通过特定姿势（如Superhero）进入恢复流程，无需完全平躺",
+        "geometric_equivalents": ["S3_Tripod", "S2_Bilateral"],
+        "recovery_class": "Asymmetric_Launch",
+        "required_chain": ["S3→S2→S1→S0"],
+        "time_budget": "3-5秒（快速发射）",
+        "critical_insight": "S3是安全锚点，S2是危险走廊（必须快速通过）"
+      },
+
+      "Level_1_Standing_Trap": {
+        "name": "站立陷阱",
+        "definition": "高度接近站立但稳定性不足（内八/单脚/晃动），处于'看似成功实则危险'的局部最优",
+        "geometric_equivalents": ["S1_Unipodal", "S0_Bipedal"],
+        "recovery_class": "Stabilization_or_Explosion",
+        "decision_tree": {
+          "if_S1": "爆发站起（单膝→双脚）",
+          "if_S0_trap": "调整步态（内八矫正）"
+        },
+        "time_budget": "1-2秒（快速决策）"
+      }
+    }
+  },
+
+  "layer_3_mapping": {
+    "description": "映射规则层：定义几何态如何触发功能策略，包含转换条件和硬切换逻辑",
+    "transition_rules": {
+      "S4_to_S3": {
+        "trigger_condition": {
+          "height": ">0.40m",
+          "contact_change": "feet_lift_off_knees_down",
+          "stability_threshold": "pitch_angle < 30deg"
+        },
+        "functional_goal": "Exit_Level_3",
+        "action": "Activate_Superhero_Policy",
+        "timeout": "2.0s"
+      },
+
+      "S3_to_S2": {
+        "trigger_condition": {
+          "height": "0.50m-0.60m",
+          "contact_change": "hand_lift_off",
+          "force_distribution": "knees_bearing_>80%"
+        },
+        "functional_goal": "Enter_Level_2_Danger_Zone",
+        "action": "Activate_Double_Policy",
+        "warning": "1D支撑状态，必须快速通过",
+        "timeout": "0.5s",
+        "fallback": "If_timeout_return_to_S3"
+      },
+
+      "S2_to_S1": {
+        "trigger_condition": {
+          "height": ">0.65m",
+          "contact_change": "one_knee_lift",
+          "momentum": "forward_velocity > 0.1m/s"
+        },
+        "functional_goal": "Prepare_Launch",
+        "action": "Activate_Single_Policy",
+        "note": "从1D支撑（线段）到0D支撑（点），势能最大化"
+      },
+
+      "S1_to_S0": {
+        "trigger_condition": {
+          "height": ">0.85m",
+          "contact_change": "knee_lift_feet_down",
+          "balance": "torso_upright > 0.8"
+        },
+        "functional_goal": "Achieve_Bipedal",
+        "action": "Activate_Stand_Policy",
+        "stabilization_check": "Monitor_for_S0_trap"
+      }
     },
-    "Level_2": {
-      "name": "Functional Recovery", 
-      "description": "Superhero着陆到双膝跪地，功能性恢复阶段",
-      "height_range": [0.45, 0.75],
-      "strategy_files": ["checkpoints/superhero_to_double.pt", "checkpoints/double_to_single.pt"]
+
+    "emergency_protocols": {
+      "S2_timeout": {
+        "condition": "在S2状态停留>0.5秒",
+        "diagnosis": "卡在线段支撑，前后摇摆无法前进",
+        "action": "退回S3（Superhero）重新蓄力，或直接进入S4（平躺）重置"
+      },
+      "S0_trap_detected": {
+        "condition": "高度>0.85m但joint_torque超限或feet_contact_force不均",
+        "diagnosis": "陷入Standing Trap（内八）",
+        "action": "触发微调策略或标记为'功能性成功但非完美站立'"
+      }
+    }
+  },
+
+  "implementation_notes": {
+    "sensor_todo": [
+      "1. 运行play_hierarchical.py记录contact_sensor数据",
+      "2. 确认每个S状态下的实际sensor_indices",
+      "3. 更新layer_1_geometric中的actual_observed字段"
+    ],
+    "policy_files": {
+      "model_crawl.pt": "S4→S3过渡",
+      "model_superhero.pt": "维持S3稳定",
+      "model_double.pt": "快速通过S2",
+      "model_single.pt": "S1爆发准备",
+      "model_stand.pt": "S0稳定控制"
     },
-    "Level_1": {
-      "name": "Stand",
-      "description": "单膝到站立，不完美但功能性可用",
-      "height_range": [0.75, 0.9],
-      "strategy_file": "checkpoints/single_to_stand.pt",
-      "note": "存在内八姿态，待优化"
+    "visualization": {
+      "usd_indicator": "头顶球体颜色编码：Red(S4)→Orange(S3)→Yellow(S2)→Cyan(S1)→Green(S0)"
     }
   }
 }
+
