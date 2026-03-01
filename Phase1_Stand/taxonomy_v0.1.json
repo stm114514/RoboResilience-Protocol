@@ -63,21 +63,22 @@
       },
 
       "S1_Unipodal": {
-        "name": "Single_Kneel",
-        "contact_topology": {
-          "theoretical": ["left_knee"],
-          "actual_observed": ["left_knee"],
-          "sensor_indices": [11],
-          "note": "单膝跪地，另一腿预备蹬地，手可能悬空或轻扶"
-        },
-        "support_dimension": 0,
-        "support_type": "point_contact",
-        "stability_class": "marginally_stable",
-        "physical_meaning": "单点接触（0D），势能最高，处于爆发临界点，可随时发力站起",
+         "name": "Asymmetric_Kneel",
+         "contact_topology": {
+           "theoretical": ["left_foot", "right_knee"],
+           "actual_observed": ["left_foot", "right_knee", "right_foot"],
+           "sensor_indices": [15, 12, 16],
+           "note": "左腿站立（脚着地）+ 右腿跪地（膝着地+脚着地），形成不对称对角支撑，非单点接触"
+      },
+        "support_dimension": 1,
+        "support_type": "asymmetric_line",
+        "stability_class": "directionally_stable",
+        "physical_meaning": "对角线支撑（左足到右膝），一腿站立一腿跪地形成高度差，像压缩弹簧的短跑起跑器，可随时蹬地爆发站起",
         "typical_height_range": [0.65, 0.80],
         "policy_file": "model_single.pt",
-        "tactical_role": "短跑起跑式：压缩弹簧，准备爆发"
-      },
+        "tactical_role": "爆发预备态：左腿承重+右腿蓄力，非单点而是力矩杠杆"
+      }
+
 
       "S0_Bipedal": {
         "name": "Stand",
