@@ -8,7 +8,7 @@
       "name": "Multi_Contact_Prone",
       "support": "≥3点任意组合（手/膝/脚/躯干），形成2D凸包",
       "dimension": "2D",
-      "stability": "静态稳定",
+      "stability": "起始不稳定",
       "policy": "model_crawl.pt",
       "note": "混沌：趴着，接触点不固定，质心在凸包内即稳"
     },
@@ -28,7 +28,7 @@
       "policy": "model_double.pt",
       "note": "支撑：1D支撑，前后无约束，双膝跪地"
     },
-    "S1_Unipodal": {
+    "S1_Spilt": {
       "name": "Asymmetric_Kneel",
       "support": "不对称多点（左脚站立+右膝跪地+可能右脚蹭地，也可能是反着来）",
       "dimension": "1.5D/不对称2D",
